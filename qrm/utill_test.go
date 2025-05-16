@@ -58,7 +58,7 @@ func TestTryAssign(t *testing.T) {
 		FloatErr    float64
 		Str         string
 		Now         time.Time
-		TsNow       *timestamppb.Timestamp
+		TsNow       timestamppb.Timestamp
 	}{}
 
 	testValue := reflect.ValueOf(&destination).Elem()

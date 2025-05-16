@@ -3,13 +3,14 @@ package qrm
 import (
 	"database/sql"
 	"fmt"
+	"reflect"
+	"strings"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/utils/must"
 	"github.com/go-jet/jet/v2/internal/utils/strslice"
 	"github.com/go-jet/jet/v2/qrm/internal"
 	"github.com/google/uuid"
-	"reflect"
-	"strings"
-	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -290,7 +291,7 @@ func tryAssign(source, destination reflect.Value) error {
 			if nullTime.Valid {
 				destination.Set(reflect.ValueOf(nullTime.Time))
 			}
-		case *timestamppb.Timestamp:
+		case timestamppb.Timestamp:
 			{
 				var nullTime internal.NullTime
 
@@ -300,7 +301,8 @@ func tryAssign(source, destination reflect.Value) error {
 				}
 
 				if nullTime.Valid {
-					destination.Set(reflect.ValueOf(timestamppb.New(nullTime.Time)))
+                    res := timestamppb.New(nullTime.Time)
+					destination.Set(reflect.ValueOf(*res))
 				}
 			}
 
