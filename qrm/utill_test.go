@@ -1,11 +1,13 @@
 package qrm
 
 import (
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestIsSimpleModelType(t *testing.T) {
@@ -24,6 +26,7 @@ func TestIsSimpleModelType(t *testing.T) {
 	require.True(t, isSimpleModelType(reflect.TypeOf([]byte("Text"))))
 	require.True(t, isSimpleModelType(reflect.TypeOf(time.Now())))
 	require.True(t, isSimpleModelType(reflect.TypeOf(uuid.New())))
+	require.True(t, isSimpleModelType(reflect.TypeOf(timestamppb.New(time.Now()))))
 
 	complexModelType := struct {
 		Field1 string
@@ -44,6 +47,7 @@ func TestTryAssign(t *testing.T) {
 	floatStr := "1.11"
 	floatErr := "1.abcd2"
 	str := "some string"
+	now := time.Now().UTC()
 
 	destination := struct {
 		Convertible int64
@@ -53,6 +57,8 @@ func TestTryAssign(t *testing.T) {
 		FloatStr    float64
 		FloatErr    float64
 		Str         string
+		Now         time.Time
+		TsNow       *timestamppb.Timestamp
 	}{}
 
 	testValue := reflect.ValueOf(&destination).Elem()
@@ -78,4 +84,14 @@ func TestTryAssign(t *testing.T) {
 	// string to string
 	require.NoError(t, tryAssign(reflect.ValueOf(str), testValue.FieldByName("Str")))
 	require.Equal(t, str, destination.Str)
+
+    //time.Time to time.Time
+    require.NoError(t, tryAssign(reflect.ValueOf(now), testValue.FieldByName("Now")))
+	require.Equal(t, now, destination.Now)
+
+    //timestamppb.Timestamp to timestamppb.Timestamp
+    require.NoError(t, tryAssign(reflect.ValueOf(now), testValue.FieldByName("TsNow")))
+	require.Equal(t, now, destination.TsNow.AsTime())
 }
+
+

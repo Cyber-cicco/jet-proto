@@ -10,6 +10,8 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var scannerInterfaceType = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
@@ -148,6 +150,7 @@ func initializeValueIfNilPtr(value reflect.Value) {
 var timeType = reflect.TypeOf(time.Now())
 var uuidType = reflect.TypeOf(uuid.New())
 var byteArrayType = reflect.TypeOf([]byte(""))
+var timeStampType = reflect.TypeOf(timestamppb.New(time.Now()))
 
 func isSimpleModelType(objType reflect.Type) bool {
 	objType = indirectType(objType)
@@ -161,8 +164,9 @@ func isSimpleModelType(objType reflect.Type) bool {
 		return true
 	}
 
-	return objType == timeType || objType == uuidType || objType == byteArrayType
+	return objType == timeType || objType == uuidType || objType == byteArrayType || objType == indirectType(timeStampType)
 }
+
 
 // source can't be pointer
 // destination can be pointer
@@ -286,6 +290,20 @@ func tryAssign(source, destination reflect.Value) error {
 			if nullTime.Valid {
 				destination.Set(reflect.ValueOf(nullTime.Time))
 			}
+		case *timestamppb.Timestamp:
+			{
+				var nullTime internal.NullTime
+
+				err := nullTime.Scan(sourceInterface)
+				if err != nil {
+					return err
+				}
+
+				if nullTime.Valid {
+					destination.Set(reflect.ValueOf(timestamppb.New(nullTime.Time)))
+				}
+			}
+
 		default:
 			return fmt.Errorf("can't assign %T to %T", sourceInterface, destination.Interface())
 		}
